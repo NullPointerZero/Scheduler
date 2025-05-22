@@ -2,11 +2,11 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Jahres-Scheduler</title>
+  <title>Jahresplaner</title>
   <style>
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
+      font-family: sans-serif;
     }
     .container {
       display: flex;
@@ -14,9 +14,14 @@
       overflow: hidden;
     }
     .names {
-      flex: 0 0 150px;
-      background: #f0f0f0;
-      padding-top: 40px; /* Platz für Datumszeile */
+      width: 150px;
+      min-width: 150px;
+      background-color: #f0f0f0;
+      padding-top: 40px;
+      box-sizing: border-box;
+      position: sticky;
+      left: 0;
+      z-index: 2;
     }
     .names div {
       height: 40px;
@@ -25,30 +30,60 @@
       padding-left: 10px;
       border-bottom: 1px solid #ccc;
     }
-    .scheduler-wrapper {
+    .schedule-wrapper {
       overflow-x: auto;
       overflow-y: hidden;
-      white-space: nowrap;
       flex: 1;
+      position: relative;
     }
-    .scheduler {
-      display: inline-block;
+    .schedule {
+      display: grid;
+      grid-template-columns: repeat(365, 100px);
+      position: relative;
     }
-    .header, .row {
-      display: flex;
+    .header {
+      display: grid;
+      grid-template-columns: repeat(365, 100px);
+      position: sticky;
+      top: 0;
+      background: white;
+      z-index: 1;
+      border-bottom: 2px solid #ccc;
     }
-    .header div, .row input {
-      width: 80px;
+    .header div {
       height: 40px;
+      line-height: 40px;
       text-align: center;
-      border: 1px solid #ccc;
+      border-right: 1px solid #ccc;
+      font-size: 12px;
+    }
+    .row {
+      display: contents;
+    }
+    .cell {
+      width: 100px;
+      height: 40px;
       box-sizing: border-box;
+      border-right: 1px solid #ccc;
+      border-bottom: 1px solid #ccc;
     }
-    .row input:focus {
-      outline: none;
+    .cell input {
+      width: 100%;
+      height: 100%;
+      border: none;
+      padding: 0;
+      text-align: center;
     }
-    .row input.filled {
-      background-color: lightgreen;
+    .cell input.filled {
+      background-color: #b2f2bb;
+    }
+    .disabled input {
+      background-color: #e0e0e0;
+      color: #888;
+      pointer-events: none;
+    }
+    .weekend {
+      background-color: #f5f5f5;
     }
   </style>
 </head>
@@ -57,62 +92,74 @@
     <div class="names">
       <div>Anna</div>
       <div>Ben</div>
-      <div>Chris</div>
-      <div>Dana</div>
-      <div>Emil</div>
+      <div>Clara</div>
+      <div>David</div>
+      <div>Elena</div>
     </div>
-    <div class="scheduler-wrapper">
-      <div class="scheduler">
-        <div class="header">
-          <!-- 365 Tage -->
-          <!-- Hier beispielhaft nur 7 Tage für Vorschau, duplizierbar auf 365 -->
-          <!-- In der finalen Version wird per JS generiert -->
-          <!-- ... -->
-        </div>
-        <!-- Zeilen für jede Person -->
-        <div class="row">
-          <!-- 365 Inputfelder -->
-        </div>
-        <div class="row">
-          <!-- 365 Inputfelder -->
-        </div>
-        <div class="row">
-          <!-- 365 Inputfelder -->
-        </div>
-        <div class="row">
-          <!-- 365 Inputfelder -->
-        </div>
-        <div class="row">
-          <!-- 365 Inputfelder -->
-        </div>
-      </div>
+    <div class="schedule-wrapper" id="scrollContainer">
+      <div class="header" id="header"></div>
+      <div class="schedule" id="schedule"></div>
     </div>
   </div>
 
   <script>
-    const daysInYear = 365;
-    const header = document.querySelector('.header');
-    const rows = document.querySelectorAll('.row');
+    const schedule = document.getElementById('schedule');
+    const header = document.getElementById('header');
+    const today = new Date();
+    const year = today.getFullYear();
+    const start = new Date(year, 0, 1);
+    const names = ["Anna", "Ben", "Clara", "David", "Elena"];
+    const days = 365;
+    const todayIndex = Math.floor((today - start) / (1000 * 60 * 60 * 24));
 
-    for (let i = 1; i <= daysInYear; i++) {
-      const date = new Date(2025, 0, i);
-      const label = document.createElement('div');
-      label.textContent = date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
-      header.appendChild(label);
+    // Header + Tagesinfo (und Wochenende-Erkennung)
+    const dayTypes = []; // zum Markieren von Wochenenden
+    for (let i = 0; i < days; i++) {
+      const date = new Date(year, 0, i + 1);
+      const isWeekend = date.getDay() === 0 || date.getDay() === 6; // Sonntag=0, Samstag=6
+      const label = date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
 
-      rows.forEach(row => {
-        const input = document.createElement('input');
-        input.setAttribute('maxlength', '8');
-        input.addEventListener('input', () => {
-          if (input.value.trim()) {
-            input.classList.add('filled');
-          } else {
-            input.classList.remove('filled');
-          }
-        });
-        row.appendChild(input);
+      const div = document.createElement('div');
+      div.innerText = label;
+      if (isWeekend) div.classList.add('weekend');
+      header.appendChild(div);
+
+      dayTypes.push({
+        isPast: i < todayIndex,
+        isWeekend: isWeekend
       });
     }
+
+    // Zellen mit Status erstellen
+    for (let name of names) {
+      for (let i = 0; i < days; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        if (dayTypes[i].isPast) cell.classList.add('disabled');
+        if (dayTypes[i].isWeekend) cell.classList.add('weekend');
+
+        const input = document.createElement('input');
+        input.maxLength = 8;
+
+        if (dayTypes[i].isPast) {
+          input.disabled = true;
+        }
+
+        input.addEventListener('input', () => {
+          input.classList.toggle('filled', input.value.length > 0);
+        });
+
+        cell.appendChild(input);
+        schedule.appendChild(cell);
+      }
+    }
+
+    // Scroll so, dass heute ganz links ist
+    window.addEventListener('load', () => {
+      const scrollContainer = document.getElementById('scrollContainer');
+      const scrollTo = todayIndex * 100;
+      scrollContainer.scrollLeft = scrollTo;
+    });
   </script>
 </body>
 </html>
