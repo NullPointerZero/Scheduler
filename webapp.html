@@ -4,21 +4,34 @@
   <meta charset="UTF-8">
   <title>Jahresplaner</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
     body {
       margin: 0;
       font-family: sans-serif;
+      overflow: hidden;
+    }
+    .toolbar {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      z-index: 10;
+    }
+    .toolbar button {
+      padding: 8px 16px;
+      font-size: 14px;
+      cursor: pointer;
     }
     .container {
       display: flex;
       height: 100vh;
-      overflow: hidden;
     }
     .names {
       width: 150px;
       min-width: 150px;
       background-color: #f0f0f0;
       padding-top: 40px;
-      box-sizing: border-box;
       position: sticky;
       left: 0;
       z-index: 2;
@@ -27,19 +40,22 @@
       height: 40px;
       display: flex;
       align-items: center;
+      justify-content: flex-start;
       padding-left: 10px;
       border-bottom: 1px solid #ccc;
     }
     .schedule-wrapper {
-      overflow-x: auto;
-      overflow-y: hidden;
+      overflow: auto;
       flex: 1;
       position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
-    .schedule {
-      display: grid;
-      grid-template-columns: repeat(365, 100px);
-      position: relative;
+    .scroll-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
     }
     .header {
       display: grid;
@@ -57,15 +73,18 @@
       border-right: 1px solid #ccc;
       font-size: 12px;
     }
-    .row {
-      display: contents;
+    .schedule {
+      display: grid;
+      grid-template-columns: repeat(365, 100px);
     }
     .cell {
       width: 100px;
       height: 40px;
-      box-sizing: border-box;
       border-right: 1px solid #ccc;
       border-bottom: 1px solid #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .cell input {
       width: 100%;
@@ -73,6 +92,7 @@
       border: none;
       padding: 0;
       text-align: center;
+      background: transparent;
     }
     .cell input.filled {
       background-color: #b2f2bb;
@@ -82,12 +102,16 @@
       color: #888;
       pointer-events: none;
     }
-    .weekend {
-      background-color: #f5f5f5;
+    .weekend-col {
+      background-color: #f5f5f5 !important;
     }
   </style>
 </head>
 <body>
+  <div class="toolbar">
+    <button onclick="scrollToToday()">Heute</button>
+  </div>
+
   <div class="container">
     <div class="names">
       <div>Anna</div>
@@ -97,53 +121,53 @@
       <div>Elena</div>
     </div>
     <div class="schedule-wrapper" id="scrollContainer">
-      <div class="header" id="header"></div>
-      <div class="schedule" id="schedule"></div>
+      <div class="scroll-inner">
+        <div class="header" id="header"></div>
+        <div class="schedule" id="schedule"></div>
+      </div>
     </div>
   </div>
 
   <script>
-    const schedule = document.getElementById('schedule');
     const header = document.getElementById('header');
+    const schedule = document.getElementById('schedule');
+    const scrollContainer = document.getElementById('scrollContainer');
+
     const today = new Date();
     const year = today.getFullYear();
     const start = new Date(year, 0, 1);
-    const names = ["Anna", "Ben", "Clara", "David", "Elena"];
     const days = 365;
+    const names = ["Anna", "Ben", "Clara", "David", "Elena"];
     const todayIndex = Math.floor((today - start) / (1000 * 60 * 60 * 24));
+    const weekendFlags = [];
 
-    // Header + Tagesinfo (und Wochenende-Erkennung)
-    const dayTypes = []; // zum Markieren von Wochenenden
+    // Kopfzeile
     for (let i = 0; i < days; i++) {
       const date = new Date(year, 0, i + 1);
-      const isWeekend = date.getDay() === 0 || date.getDay() === 6; // Sonntag=0, Samstag=6
       const label = date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+      const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+      weekendFlags.push(isWeekend);
 
       const div = document.createElement('div');
       div.innerText = label;
-      if (isWeekend) div.classList.add('weekend');
+      if (isWeekend) div.classList.add('weekend-col');
       header.appendChild(div);
-
-      dayTypes.push({
-        isPast: i < todayIndex,
-        isWeekend: isWeekend
-      });
     }
 
-    // Zellen mit Status erstellen
-    for (let name of names) {
-      for (let i = 0; i < days; i++) {
+    // Zellen für jede Person
+    for (let personIndex = 0; personIndex < names.length; personIndex++) {
+      for (let dayIndex = 0; dayIndex < days; dayIndex++) {
+        const isPast = dayIndex < todayIndex;
+        const isWeekend = weekendFlags[dayIndex];
+
         const cell = document.createElement('div');
-        cell.className = 'cell';
-        if (dayTypes[i].isPast) cell.classList.add('disabled');
-        if (dayTypes[i].isWeekend) cell.classList.add('weekend');
+        cell.classList.add('cell');
+        if (isPast) cell.classList.add('disabled');
+        if (isWeekend) cell.classList.add('weekend-col');
 
         const input = document.createElement('input');
         input.maxLength = 8;
-
-        if (dayTypes[i].isPast) {
-          input.disabled = true;
-        }
+        if (isPast) input.disabled = true;
 
         input.addEventListener('input', () => {
           input.classList.toggle('filled', input.value.length > 0);
@@ -154,11 +178,17 @@
       }
     }
 
-    // Scroll so, dass heute ganz links ist
+    // Scroll zum heutigen Tag (beim Laden und Button)
+    function scrollToToday() {
+      scrollContainer.scrollLeft = todayIndex * 100;
+    }
+
     window.addEventListener('load', () => {
-      const scrollContainer = document.getElementById('scrollContainer');
-      const scrollTo = todayIndex * 100;
-      scrollContainer.scrollLeft = scrollTo;
+      scrollToToday();
+      // vertikal zentrieren
+      const rowHeight = 40;
+      const middleRowOffset = (names.length / 2 - 0.5) * rowHeight;
+      scrollContainer.scrollTop = middleRowOffset;
     });
   </script>
 </body>
