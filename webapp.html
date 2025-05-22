@@ -1,96 +1,118 @@
-CTYPE html>
+<!DOCTYPE html>
 <html lang="de">
-	<head>
-		  <meta charset="UTF-8">
-		    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-		      <title>Scheduler</title>
-		        <style>
+<head>
+  <meta charset="UTF-8">
+  <title>Jahres-Scheduler</title>
+  <style>
     body {
-	          font-family: sans-serif;
-		        margin: 0;
-			      padding: 0;
-			          }
-        .container {
-		      display: flex;
-		            height: 100vh;
-			          overflow: hidden;
-				      }
-	    .names {
-		          min-width: 150px;
-			        background-color: #f0f0f0;
-				      padding: 10px;
-				            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-					          position: sticky;
-						        left: 0;
-							      z-index: 1;
-							          }
-	        .names div {
-			      padding: 8px 4px;
-			            border-bottom: 1px solid #ccc;
-				        }
-		    .schedule {
-			          overflow-x: auto;
-				        white-space: nowrap;
-					      flex-grow: 1;
-					          }
-		        .day-column {
-				      display: inline-block;
-				            vertical-align: top;
-					          width: 100px;
-						      }
-			    .day-column .cell {
-				          height: 30px;
-					        margin: 2px;
-						    }
-			        input[type="text"] {
-					      width: 90%;
-					            height: 100%;
-						          box-sizing: border-box;
-							        text-align: center;
-								      border: 1px solid #ccc;
-								            border-radius: 4px;
-									        }
-				    input[type="text"].filled {
-					          background-color: #b2f2bb;
-						      }
-				      </style>
-	</head>
-	<body>
-		  <div class="container">
-			      <div class="names">
-				            <div>Anna</div>
-					          <div>Ben</div>
-						        <div>Clara</div>
-							      <div>David</div>
-							            <div>Eva</div>
-								        </div>
-									    <div class="schedule" id="schedule"></div>
-									      </div>
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+    .container {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .names {
+      flex: 0 0 150px;
+      background: #f0f0f0;
+      padding-top: 40px; /* Platz für Datumszeile */
+    }
+    .names div {
+      height: 40px;
+      display: flex;
+      align-items: center;
+      padding-left: 10px;
+      border-bottom: 1px solid #ccc;
+    }
+    .scheduler-wrapper {
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+      flex: 1;
+    }
+    .scheduler {
+      display: inline-block;
+    }
+    .header, .row {
+      display: flex;
+    }
+    .header div, .row input {
+      width: 80px;
+      height: 40px;
+      text-align: center;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+    .row input:focus {
+      outline: none;
+    }
+    .row input.filled {
+      background-color: lightgreen;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="names">
+      <div>Anna</div>
+      <div>Ben</div>
+      <div>Chris</div>
+      <div>Dana</div>
+      <div>Emil</div>
+    </div>
+    <div class="scheduler-wrapper">
+      <div class="scheduler">
+        <div class="header">
+          <!-- 365 Tage -->
+          <!-- Hier beispielhaft nur 7 Tage für Vorschau, duplizierbar auf 365 -->
+          <!-- In der finalen Version wird per JS generiert -->
+          <!-- ... -->
+        </div>
+        <!-- Zeilen für jede Person -->
+        <div class="row">
+          <!-- 365 Inputfelder -->
+        </div>
+        <div class="row">
+          <!-- 365 Inputfelder -->
+        </div>
+        <div class="row">
+          <!-- 365 Inputfelder -->
+        </div>
+        <div class="row">
+          <!-- 365 Inputfelder -->
+        </div>
+        <div class="row">
+          <!-- 365 Inputfelder -->
+        </div>
+      </div>
+    </div>
+  </div>
 
-									        <script>
-											    const schedule = document.getElementById('schedule');
-											    const daysInYear = 10; // Für Testzwecke, später auf 365 erhöhen
-											    const peopleCount = 5;
+  <script>
+    const daysInYear = 365;
+    const header = document.querySelector('.header');
+    const rows = document.querySelectorAll('.row');
 
-											    for (let day = 1; day <= daysInYear; day++) {
-																							          const col = document.createElement('div');
-																							          col.className = 'day-column';
-																							          for (let p = 0; p < peopleCount; p++) {
-																																				          const cell = document.createElement('div');
-																																				          cell.className = 'cell';
-																																				          const input = document.createElement('input');
-																																				          input.type = 'text';
-																																				          input.maxLength = 8;
-																																				          input.addEventListener('input', () => {
-																																																	            input.classList.toggle('filled', input.value.length > 0);
-																																																	          });
-																																				          cell.appendChild(input);
-																																				          col.appendChild(cell);
-																																				        }
-																							          schedule.appendChild(col);
-																							        }
-											  </script>
-	</body>
-</html>  
+    for (let i = 1; i <= daysInYear; i++) {
+      const date = new Date(2025, 0, i);
+      const label = document.createElement('div');
+      label.textContent = date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+      header.appendChild(label);
 
-
+      rows.forEach(row => {
+        const input = document.createElement('input');
+        input.setAttribute('maxlength', '8');
+        input.addEventListener('input', () => {
+          if (input.value.trim()) {
+            input.classList.add('filled');
+          } else {
+            input.classList.remove('filled');
+          }
+        });
+        row.appendChild(input);
+      });
+    }
+  </script>
+</body>
+</html>
