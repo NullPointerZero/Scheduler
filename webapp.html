@@ -1,0 +1,96 @@
+CTYPE html>
+<html lang="de">
+	<head>
+		  <meta charset="UTF-8">
+		    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+		      <title>Scheduler</title>
+		        <style>
+    body {
+	          font-family: sans-serif;
+		        margin: 0;
+			      padding: 0;
+			          }
+        .container {
+		      display: flex;
+		            height: 100vh;
+			          overflow: hidden;
+				      }
+	    .names {
+		          min-width: 150px;
+			        background-color: #f0f0f0;
+				      padding: 10px;
+				            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+					          position: sticky;
+						        left: 0;
+							      z-index: 1;
+							          }
+	        .names div {
+			      padding: 8px 4px;
+			            border-bottom: 1px solid #ccc;
+				        }
+		    .schedule {
+			          overflow-x: auto;
+				        white-space: nowrap;
+					      flex-grow: 1;
+					          }
+		        .day-column {
+				      display: inline-block;
+				            vertical-align: top;
+					          width: 100px;
+						      }
+			    .day-column .cell {
+				          height: 30px;
+					        margin: 2px;
+						    }
+			        input[type="text"] {
+					      width: 90%;
+					            height: 100%;
+						          box-sizing: border-box;
+							        text-align: center;
+								      border: 1px solid #ccc;
+								            border-radius: 4px;
+									        }
+				    input[type="text"].filled {
+					          background-color: #b2f2bb;
+						      }
+				      </style>
+	</head>
+	<body>
+		  <div class="container">
+			      <div class="names">
+				            <div>Anna</div>
+					          <div>Ben</div>
+						        <div>Clara</div>
+							      <div>David</div>
+							            <div>Eva</div>
+								        </div>
+									    <div class="schedule" id="schedule"></div>
+									      </div>
+
+									        <script>
+											    const schedule = document.getElementById('schedule');
+											    const daysInYear = 10; // Für Testzwecke, später auf 365 erhöhen
+											    const peopleCount = 5;
+
+											    for (let day = 1; day <= daysInYear; day++) {
+																							          const col = document.createElement('div');
+																							          col.className = 'day-column';
+																							          for (let p = 0; p < peopleCount; p++) {
+																																				          const cell = document.createElement('div');
+																																				          cell.className = 'cell';
+																																				          const input = document.createElement('input');
+																																				          input.type = 'text';
+																																				          input.maxLength = 8;
+																																				          input.addEventListener('input', () => {
+																																																	            input.classList.toggle('filled', input.value.length > 0);
+																																																	          });
+																																				          cell.appendChild(input);
+																																				          col.appendChild(cell);
+																																				        }
+																							          schedule.appendChild(col);
+																							        }
+											  </script>
+	</body>
+</html>  
+
+
